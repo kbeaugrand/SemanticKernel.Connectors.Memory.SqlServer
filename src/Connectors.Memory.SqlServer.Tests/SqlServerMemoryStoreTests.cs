@@ -43,7 +43,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
 
         this._dataSource = new SqlServerClient(connectionString, "dbo");
 
-        await this._dataSource.CreateTables(CancellationToken.None).ConfigureAwait(false);
+        await this._dataSource.CreateTablesAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     [Fact(Skip = SkipReason)]
