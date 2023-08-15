@@ -1,8 +1,8 @@
 # Semantic Kernel - SQL Connector
 
-[![Build & Test](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml/badge.svg)](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml)
+[![Build & Test](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml)
 
-[![Create Release](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml)
+[![Create Release](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml)
 
 This is a connector for the [Semantic Kernel](https://aka.ms/semantic-kernel).
 
@@ -32,7 +32,7 @@ dotnet add package Microsoft.SemanticKernel.Connectors.Memory.SqlServer --versio
 To add your SQL Server memory connector, add the following statements to your kernel initialization code:
 
 ```csharp
-using Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
+using SemanticKernel.Connectors.Memory.SqlServer;
 ...
 var kernel = Kernel.Builder
             ...

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.SemanticKernel.AI.Embeddings;
 
-namespace Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
+namespace SemanticKernel.Connectors.Memory.SqlServer;
 
 /// <summary>
 /// A sql memory entry.

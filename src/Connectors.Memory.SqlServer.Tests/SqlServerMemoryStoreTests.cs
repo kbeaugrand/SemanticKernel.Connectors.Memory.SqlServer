@@ -8,8 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.SemanticKernel.AI.Embeddings;
-using Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
 using Microsoft.SemanticKernel.Memory;
+using SemanticKernel.Connectors.Memory.SqlServer;
 using Xunit;
 
 namespace SemanticKernel.IntegrationTests.Connectors.Memory.SqlServer;

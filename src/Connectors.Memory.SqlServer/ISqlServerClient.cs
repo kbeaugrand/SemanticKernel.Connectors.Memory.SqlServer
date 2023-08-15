@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
+namespace SemanticKernel.Connectors.Memory.SqlServer;
 
 /// <summary>
 /// Interface for a client that interacts with a SQL Server database to store and retrieve data.

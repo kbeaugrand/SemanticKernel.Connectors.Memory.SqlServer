@@ -1,4 +1,10 @@
-# About Semantic Kernel
+# SQL Server Connector for Semantic Kernel
+
+This is a connector for the Semantic Kernel.
+
+It provides a connection to a SQL database for the Semantic Kernel for the memories.
+
+## About Semantic Kernel
 
 **Semantic Kernel (SK)** is a lightweight SDK enabling integration of AI Large
 Language Models (LLMs) with conventional programming languages. The SK
@@ -13,10 +19,3 @@ generation, contextual and long-term vectorized memory, embeddings,
 summarization, zero or few-shot learning, semantic indexing, recursive
 reasoning, intelligent planning, and access to external knowledge stores and
 proprietary data.
-
-# Getting Started ⚡
-
-- Learn more at the [documentation site](https://aka.ms/SK-Docs).
-- Join the [Discord community](https://aka.ms/SKDiscord).
-- Follow the team on [Semantic Kernel blog](https://aka.ms/sk/blog).
-- Check out the [GitHub repository](https://github.com/microsoft/semantic-kernel) for the latest updates.

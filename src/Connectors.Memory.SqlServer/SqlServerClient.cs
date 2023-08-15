@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.SemanticKernel.AI.Embeddings;
 
-namespace Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
+namespace SemanticKernel.Connectors.Memory.SqlServer;
 
 /// <summary>
 /// Represents a client for interacting with a SQL Server database for storing semantic memories and embeddings.

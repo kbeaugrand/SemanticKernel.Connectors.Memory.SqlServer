@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.SemanticKernel.AI.Embeddings;
 using Microsoft.SemanticKernel.Memory;
 
-namespace Microsoft.SemanticKernel.Connectors.Memory.SqlServer;
+namespace SemanticKernel.Connectors.Memory.SqlServer;
 
 /// <summary>
 /// An implementation of <see cref="IMemoryStore"/> backed by a SQL server database.
