@@ -1,0 +1,32 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Create Release
+
+on:
+  release: 
+    types: [published]
+
+jobs:
+  build: 
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+      working-directory: ./src/Connectors.Memory.SqlServer
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      working-directory: ./src/Connectors.Memory.SqlServer
+    - name: Pack
+      run: dotnet pack --configuration Release
+      working-directory: ./src/Connectors.Memory.SqlServer
+    - name: Puush to Github
+      run: dotnet nuget push ./bin/Release/*.nupkg --source "github" --skip-duplicate
+      working-directory: ./src/Connectors.Memory.SqlServer
+    
