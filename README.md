@@ -1,5 +1,9 @@
 # Semantic Kernel - SQL Connector
 
+[![Build & Test](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml/badge.svg)](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml)
+
+[![Create Release](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/Microsoft.SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml)
+
 This is a connector for the [Semantic Kernel](https://aka.ms/semantic-kernel).
 
 It provides a connection to a SQL database for the Semantic Kernel for the memories.
@@ -18,16 +22,9 @@ Please take a look at [Semantic Kernel](https://aka.ms/semantic-kernel) for more
 
 To install this memory store, you need to add the required nuget package to your project:
 
-### In PowerShell
-
-```powershell
-Install-Package Microsoft.SemanticKernel.Connectors.Memory.SqlServer -IncludePrerelease  
-```
-
-### In NuGet CLI
-
 ```dotnetcli
-dotnet add package Microsoft.SemanticKernel.Connectors.Memory.SqlServer -PreRelease
+dotnet nuget add source https://nuget.pkg.github.com/kbeaugrand/index.json --name github
+dotnet add package Microsoft.SemanticKernel.Connectors.Memory.SqlServer --version 0.0.1-alpha
 ```
 
 ## Usage
