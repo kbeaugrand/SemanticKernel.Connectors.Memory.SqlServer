@@ -110,7 +110,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test",
             text: "text",
             description: "description",
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }),
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }),
             key: null,
             timestamp: null);
         string collection = "test_collection";
@@ -124,8 +124,8 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
         // Assert
         Assert.NotNull(actualDefault);
         Assert.NotNull(actualWithEmbedding);
-        Assert.Empty(actualDefault.Embedding.Vector);
-        Assert.NotEmpty(actualWithEmbedding.Embedding.Vector);
+        Assert.Empty(actualDefault.Embedding.ToArray());
+        Assert.NotEmpty(actualWithEmbedding.Embedding.ToArray());
     }
 
     [Fact(Skip = SkipReason)]
@@ -137,7 +137,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test",
             text: "text",
             description: "description",
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }),
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }),
             key: null,
             timestamp: null);
         string collection = "test_collection";
@@ -151,7 +151,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
         Assert.NotNull(actual);
         Assert.Equal(testRecord.Metadata.Id, key);
         Assert.Equal(testRecord.Metadata.Id, actual.Key);
-        Assert.Equal(testRecord.Embedding.Vector, actual.Embedding.Vector);
+        Assert.Equal(testRecord.Embedding, actual.Embedding);
         Assert.Equal(testRecord.Metadata.Text, actual.Metadata.Text);
         Assert.Equal(testRecord.Metadata.Description, actual.Metadata.Description);
         Assert.Equal(testRecord.Metadata.ExternalSourceName, actual.Metadata.ExternalSourceName);
@@ -167,7 +167,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test",
             text: "text",
             description: "description",
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }),
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }),
             key: null,
             timestamp: DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
         string collection = "test_collection";
@@ -181,7 +181,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
         Assert.NotNull(actual);
         Assert.Equal(testRecord.Metadata.Id, key);
         Assert.Equal(testRecord.Metadata.Id, actual.Key);
-        Assert.Equal(testRecord.Embedding.Vector, actual.Embedding.Vector);
+        Assert.Equal(testRecord.Embedding, actual.Embedding);
         Assert.Equal(testRecord.Metadata.Text, actual.Metadata.Text);
         Assert.Equal(testRecord.Metadata.Description, actual.Metadata.Description);
         Assert.Equal(testRecord.Metadata.ExternalSourceName, actual.Metadata.ExternalSourceName);
@@ -199,12 +199,12 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: commonId,
             text: "text",
             description: "description",
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
         MemoryRecord testRecord2 = MemoryRecord.LocalRecord(
             id: commonId,
             text: "text2",
             description: "description2",
-            embedding: new Embedding<float>(new float[] { 1, 2, 4 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 4 }));
         string collection = "test_collection";
 
         // Act
@@ -217,8 +217,8 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
         Assert.NotNull(actual);
         Assert.Equal(testRecord.Metadata.Id, key);
         Assert.Equal(testRecord2.Metadata.Id, actual.Key);
-        Assert.NotEqual(testRecord.Embedding.Vector, actual.Embedding.Vector);
-        Assert.Equal(testRecord2.Embedding.Vector, actual.Embedding.Vector);
+        Assert.NotEqual(testRecord.Embedding, actual.Embedding);
+        Assert.Equal(testRecord2.Embedding, actual.Embedding);
         Assert.NotEqual(testRecord.Metadata.Text, actual.Metadata.Text);
         Assert.Equal(testRecord2.Metadata.Description, actual.Metadata.Description);
     }
@@ -232,7 +232,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test",
             text: "text",
             description: "description",
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
         string collection = "test_collection";
 
         // Act
@@ -298,7 +298,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
     {
         // Arrange
         SqlServerMemoryStore memoryStore = this.CreateMemoryStore();
-        var compareEmbedding = new Embedding<float>(new float[] { 1, 1, 1 });
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
         int topN = 4;
         string collection = "test_collection";
         await memoryStore.CreateCollectionAsync(collection);
@@ -307,7 +307,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 1, 1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 1, 1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -315,7 +315,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -1, -1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -1, -1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -323,7 +323,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -331,7 +331,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -2, -3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -2, -3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -339,7 +339,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, -1, -2 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, -1, -2 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         // Act
@@ -360,7 +360,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
     {
         // Arrange
         SqlServerMemoryStore memoryStore = this.CreateMemoryStore();
-        var compareEmbedding = new Embedding<float>(new float[] { 1, 1, 1 });
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
         string collection = "test_collection";
         await memoryStore.CreateCollectionAsync(collection);
         int i = 0;
@@ -368,7 +368,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 1, 1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 1, 1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -376,7 +376,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -1, -1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -1, -1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -384,7 +384,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -392,7 +392,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -2, -3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -2, -3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -400,7 +400,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, -1, -2 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, -1, -2 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         // Act
@@ -411,8 +411,8 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
         // Assert
         Assert.NotNull(topNResultDefault);
         Assert.NotNull(topNResultWithEmbedding);
-        Assert.Empty(topNResultDefault.Value.Item1.Embedding.Vector);
-        Assert.NotEmpty(topNResultWithEmbedding.Value.Item1.Embedding.Vector);
+        Assert.Empty(topNResultDefault.Value.Item1.Embedding.ToArray());
+        Assert.NotEmpty(topNResultWithEmbedding.Value.Item1.Embedding.ToArray());
     }
 
     [Fact(Skip = SkipReason)]
@@ -420,7 +420,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
     {
         // Arrange
         SqlServerMemoryStore memoryStore = this.CreateMemoryStore();
-        var compareEmbedding = new Embedding<float>(new float[] { 1, 1, 1 });
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
         string collection = "test_collection";
         await memoryStore.CreateCollectionAsync(collection);
         int i = 0;
@@ -428,7 +428,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 1, 1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 1, 1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -436,7 +436,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -1, -1 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -1, -1 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -444,7 +444,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -452,7 +452,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { -1, -2, -3 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { -1, -2, -3 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         i++;
@@ -460,7 +460,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
             id: "test" + i,
             text: "text" + i,
             description: "description" + i,
-            embedding: new Embedding<float>(new float[] { 1, -1, -2 }));
+            embedding: new ReadOnlyMemory<float>(new float[] { 1, -1, -2 }));
         _ = await memoryStore.UpsertAsync(collection, testRecord);
 
         // Act
@@ -478,7 +478,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
     {
         // Arrange
         SqlServerMemoryStore memoryStore = this.CreateMemoryStore();
-        var compareEmbedding = new Embedding<float>(new float[] { 1, 1, 1 });
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
         int topN = 4;
         string collection = "test_collection";
         await memoryStore.CreateCollectionAsync(collection);
@@ -489,7 +489,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
                 id: "test" + i,
                 text: "text" + i,
                 description: "description" + i,
-                embedding: new Embedding<float>(new float[] { 1, 1, 1 }));
+                embedding: new ReadOnlyMemory<float>(new float[] { 1, 1, 1 }));
             _ = await memoryStore.UpsertAsync(collection, testRecord);
         }
 
@@ -631,7 +631,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
                 id: "test" + i,
                 text: "text" + i,
                 description: "description" + i,
-                embedding: new Embedding<float>(new float[] { 1, 1, 1 }));
+                embedding: new ReadOnlyMemory<float>(new float[] { 1, 1, 1 }));
             records = records.Append(testRecord);
         }
 
@@ -641,7 +641,7 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
                 externalId: "test" + i,
                 sourceName: "sourceName" + i,
                 description: "description" + i,
-                embedding: new Embedding<float>(new float[] { 1, 2, 3 }));
+                embedding: new ReadOnlyMemory<float>(new float[] { 1, 2, 3 }));
             records = records.Append(testRecord);
         }
 
