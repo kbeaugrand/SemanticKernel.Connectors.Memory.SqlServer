@@ -24,7 +24,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
       working-directory: ./src/Connectors.Memory.SqlServer
     - name: Pack
-      run: dotnet pack --configuration Release
+      run: dotnet pack --configuration Release /p:Version=${{ github.event.release.tag_name }}
       working-directory: ./src/Connectors.Memory.SqlServer
     - name: Push to NuGet
       run: |
