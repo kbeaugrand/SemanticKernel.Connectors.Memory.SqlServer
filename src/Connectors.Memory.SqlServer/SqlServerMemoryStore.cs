@@ -109,7 +109,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
     }
 
     /// <inheritdoc/>
-    public async Task<(MemoryRecord, double)?> GetNearestMatchAsync(string collectionName, Embedding<float> embedding, double minRelevanceScore = 0, bool withEmbedding = false, CancellationToken cancellationToken = default)
+    public async Task<(MemoryRecord, double)?> GetNearestMatchAsync(string collectionName, ReadOnlyMemory<float> embedding, double minRelevanceScore = 0, bool withEmbedding = false, CancellationToken cancellationToken = default)
     {
         var nearest = this.GetNearestMatchesAsync(
                     collectionName: collectionName,
@@ -129,7 +129,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<(MemoryRecord, double)> GetNearestMatchesAsync(string collectionName, Embedding<float> embedding, int limit, double minRelevanceScore = 0, bool withEmbeddings = false, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<(MemoryRecord, double)> GetNearestMatchesAsync(string collectionName, ReadOnlyMemory<float> embedding, int limit, double minRelevanceScore = 0, bool withEmbeddings = false, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(collectionName))
         {
@@ -143,7 +143,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
 
         IAsyncEnumerable<(SqlServerMemoryEntry, double)> results = this._dbClient.GetNearestMatchesAsync(
             collectionName: collectionName,
-            embedding: JsonSerializer.Serialize(embedding.Vector.ToArray()),
+            embedding: JsonSerializer.Serialize(embedding.ToArray()),
             limit: limit,
             minRelevanceScore: minRelevanceScore,
             withEmbeddings: withEmbeddings,
@@ -211,7 +211,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
     {
         return MemoryRecord.FromJsonMetadata(
             json: entry.MetadataString,
-            embedding: entry.Embedding,
+            embedding: new ReadOnlyMemory<float>(entry.Embedding.Vector.ToArray()),
             key: entry.Key,
             timestamp: entry.Timestamp
             );
@@ -226,7 +226,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
             collectionName: collectionName,
             key: record.Key,
             metadata: record.GetSerializedMetadata(),
-            embedding: JsonSerializer.Serialize(record.Embedding.Vector.ToArray()),
+            embedding: JsonSerializer.Serialize(record.Embedding.ToArray()),
             timestamp: record.Timestamp,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
