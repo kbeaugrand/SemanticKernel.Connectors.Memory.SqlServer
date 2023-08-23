@@ -5,7 +5,6 @@
 [![Version](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer)
 [![License](https://img.shields.io/github/license/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer)
 
-
 This is a connector for the [Semantic Kernel](https://aka.ms/semantic-kernel).
 
 It provides a connection to a SQL database for the Semantic Kernel for the memories.
