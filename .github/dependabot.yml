@@ -10,3 +10,8 @@ updates:
     directory: "/src/"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "System.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
