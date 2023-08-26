@@ -102,8 +102,7 @@ public sealed class SqlServerClient : ISqlServerClient
                     
                     IF OBJECT_ID(N'{this._schema}.IXC_{$"{EmbeddingsTableName}_{collectionName}"}', N'U') IS NULL
                     CREATE CLUSTERED COLUMNSTORE INDEX IXC_{$"{EmbeddingsTableName}_{collectionName}"}
-                    ON {this.GetFullTableName($"{EmbeddingsTableName}_{collectionName}")}
-                    ORDER ([memory_id]);";
+                    ON {this.GetFullTableName($"{EmbeddingsTableName}_{collectionName}")};";
 
             command.Parameters.AddWithValue("@collectionName", collectionName);
 
