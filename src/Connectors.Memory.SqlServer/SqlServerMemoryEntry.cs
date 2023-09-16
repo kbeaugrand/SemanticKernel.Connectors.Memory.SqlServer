@@ -34,7 +34,7 @@ public record struct SqlServerMemoryEntry
     /// <summary>
     /// The embedding.
     /// </summary>
-    public Embedding<float> Embedding { get; set; }
+    public ReadOnlyMemory<float>? Embedding { get; set; }
 
     /// <summary>
     /// Optional timestamp. Its 'DateTimeKind' is <see cref="DateTimeKind.Utc"/>

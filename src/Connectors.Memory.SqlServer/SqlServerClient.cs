@@ -473,7 +473,7 @@ public sealed class SqlServerClient : ISqlServerClient
 
         if (withEmbedding)
         {
-            entry.Embedding = new Embedding<float>(JsonSerializer.Deserialize<IEnumerable<float>>(dataReader.GetString(dataReader.GetOrdinal("embedding")))!);
+            entry.Embedding = new ReadOnlyMemory<float>(JsonSerializer.Deserialize<IEnumerable<float>>(dataReader.GetString(dataReader.GetOrdinal("embedding")))!.ToArray());
         }
 
         return entry;

@@ -211,7 +211,7 @@ public sealed class SqlServerMemoryStore : IMemoryStore
     {
         return MemoryRecord.FromJsonMetadata(
             json: entry.MetadataString,
-            embedding: new ReadOnlyMemory<float>(entry.Embedding.Vector.ToArray()),
+            embedding: entry.Embedding ?? new ReadOnlyMemory<float>(),
             key: entry.Key,
             timestamp: entry.Timestamp
             );
