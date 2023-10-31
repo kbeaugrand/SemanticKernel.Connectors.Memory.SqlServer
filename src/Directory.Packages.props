@@ -25,7 +25,7 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.3" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <!-- Skills -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.2" />
     <!-- Symbols -->
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="1.1.1" />
     <!-- Analyzers -->
