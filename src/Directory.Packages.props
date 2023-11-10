@@ -5,7 +5,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.0-beta5" />
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.0-beta6" />
     <PackageVersion Include="System.Text.Json" Version="6.0.8" />
 
 
