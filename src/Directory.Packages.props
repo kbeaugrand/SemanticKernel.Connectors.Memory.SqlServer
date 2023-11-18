@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.0-beta8" />
-    <PackageVersion Include="System.Text.Json" Version="6.0.8" />
+    <PackageVersion Include="System.Text.Json" Version="6.0.9" />
 
 
     <!-- Microsoft.Extensions.Configuration -->
