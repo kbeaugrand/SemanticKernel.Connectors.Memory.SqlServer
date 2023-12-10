@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Kevin BEAUGRAND. All rights reserved.
 
 using System;
-using System.Collections.Generic;
-using Microsoft.SemanticKernel.AI.Embeddings;
 
 namespace SemanticKernel.Connectors.Memory.SqlServer;
 
