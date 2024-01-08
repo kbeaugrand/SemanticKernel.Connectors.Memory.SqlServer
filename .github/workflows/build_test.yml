@@ -25,6 +25,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
       working-directory: ./src/Connectors.Memory.SqlServer.Tests
+
     - name: Test
       run: dotnet test --no-build --verbosity normal
       working-directory: ./src/Connectors.Memory.SqlServer.Tests
