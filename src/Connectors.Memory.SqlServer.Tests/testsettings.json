@@ -32,6 +32,6 @@
     "ConnectionString": ""
   },
   "SqlServer": {
-    "ConnectionString": ""
+    "ConnectionString": "Server=tcp:localhost,1433;Initial Catalog=master;Persist Security Info=False;User ID=SA;Password=P@ssw0rd;MultipleActiveResultSets=False;TrustServerCertificate=True;Connection Timeout=30;"
   }
 }

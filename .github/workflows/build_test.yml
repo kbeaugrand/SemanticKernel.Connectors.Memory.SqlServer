@@ -14,18 +14,35 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+
     - uses: actions/checkout@v4
+  
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 6.0.x
+
     - name: Restore dependencies
       run: dotnet restore
       working-directory: ./src/Connectors.Memory.SqlServer.Tests
+
     - name: Build
       run: dotnet build --no-restore
       working-directory: ./src/Connectors.Memory.SqlServer.Tests
 
+    - name: Launch SQL Server with docker
+      run: |
+        docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=P@ssw0rd" \
+           -p 1433:1433 --name sql \
+           -d \
+           mcr.microsoft.com/mssql/server:2022-latest;
+        sleep 30
+
     - name: Test
       run: dotnet test --no-build --verbosity normal
       working-directory: ./src/Connectors.Memory.SqlServer.Tests
+
+    - name: Stop SQL Server
+      run: docker stop sql
+
+
