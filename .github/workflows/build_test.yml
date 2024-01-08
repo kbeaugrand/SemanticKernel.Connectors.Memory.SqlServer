@@ -44,5 +44,3 @@ jobs:
 
     - name: Stop SQL Server
       run: docker stop sql
-
-

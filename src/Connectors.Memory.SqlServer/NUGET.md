@@ -1,4 +1,4 @@
-# SQL Server Connector for Semantic Kernel
+﻿# SQL Server Connector for Semantic Kernel
 
 This is a connector for the Semantic Kernel.
 

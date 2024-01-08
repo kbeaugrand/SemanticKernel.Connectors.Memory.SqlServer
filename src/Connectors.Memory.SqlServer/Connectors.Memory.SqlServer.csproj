@@ -29,6 +29,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="C:\Users\KevinBEAUGRAND\source\repos\kbeaugrand\SemanticKernel.Connectors.Memory.SqlServer/nuget/NUGET.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.SemanticKernel" />
   </ItemGroup>
