@@ -1,4 +1,4 @@
-# Semantic Kernel - SQL Connector
+# Semantic Kernel & Kernel Memory - SQL Connector
 
 [![Build & Test](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/build_test.yml)
 [![Create Release](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Connectors.Memory.SqlServer/actions/workflows/publish.yml)
@@ -19,7 +19,12 @@ new potential and adding value to applications with AI.
 
 Please take a look at [Semantic Kernel](https://aka.ms/semantic-kernel) for more information.
 
-## Installation
+## About Kernel Memory
+
+**Kernel Memory** (KM) is a multi-modal **AI Service** specialized in the efficient indexing of datasets through custom continuous data hybrid pipelines, with support for **Retrieval Augmented Generation (RAG)**, synthetic memory, prompt engineering, and custom semantic memory processing.
+
+
+## Semantic Kernel Plugin
 
 To install this memory store, you need to add the required nuget package to your project:
 
@@ -39,6 +44,28 @@ var kernel = Kernel.Builder
                 .WithMemoryStorage(await SqlServerMemoryStore.ConnectAsync(connectionString: "Server=.;Database=SK;Trusted_Connection=True;"))
             ...
                 .Build();
+```
+
+The memory store will populate all the needed tables during startup and let you focus on the development of your plugin.
+
+## Kernel Memory Plugin
+
+```bash
+dotnet add package KernelMemory.MemoryStorage.SqlServer
+```
+
+## Usage
+
+To add your SQL Server memory connector, add the following statements to your kernel memory initialization code:
+
+```csharp
+using SemanticKernel.Connectors.Memory.SqlServer;
+...
+var memory = new KernelMemoryBuilder()
+    .WithOpenAIDefaults(Env.Var("OPENAI_API_KEY"))
+    .WithSqlServerMemoryDb("YouSqlConnectionString")
+            ...
+    .Build<MemoryServerless>();
 ```
 
 The memory store will populate all the needed tables during startup and let you focus on the development of your plugin.

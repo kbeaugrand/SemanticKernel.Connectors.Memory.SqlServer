@@ -9,6 +9,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Connectors.Memory.SqlServer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "src\Connectors.Memory.SqlServer.Tests\IntegrationTests.csproj", "{8CD5A6C2-0BF0-4A14-9F6F-0BDCD986D94F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KernelMemory.MemoryStorage.SqlServer", "src\KernelMemory.MemoryStorage.SqlServer\KernelMemory.MemoryStorage.SqlServer.csproj", "{F59B1392-1175-4178-B652-3A1CDD37D3EF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B7F0129-06C6-4408-90CF-16D9BA9C8CEC}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		.github\workflows\build_test.yml = .github\workflows\build_test.yml
+		LICENSE.md = LICENSE.md
+		nuget\nuget-package.props = nuget\nuget-package.props
+		.github\workflows\publish.yml = .github\workflows\publish.yml
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +35,10 @@ Global
 		{8CD5A6C2-0BF0-4A14-9F6F-0BDCD986D94F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CD5A6C2-0BF0-4A14-9F6F-0BDCD986D94F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CD5A6C2-0BF0-4A14-9F6F-0BDCD986D94F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F59B1392-1175-4178-B652-3A1CDD37D3EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F59B1392-1175-4178-B652-3A1CDD37D3EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F59B1392-1175-4178-B652-3A1CDD37D3EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F59B1392-1175-4178-B652-3A1CDD37D3EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +46,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A669B285-4F66-469B-B79D-FDCA0E81BC2A} = {5569512D-4D33-4DD8-A027-6AF4236546CB}
 		{8CD5A6C2-0BF0-4A14-9F6F-0BDCD986D94F} = {5569512D-4D33-4DD8-A027-6AF4236546CB}
+		{F59B1392-1175-4178-B652-3A1CDD37D3EF} = {5569512D-4D33-4DD8-A027-6AF4236546CB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A32F435C-6A25-4E24-8FFC-FB4F8A235B8C}

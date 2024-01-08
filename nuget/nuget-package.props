@@ -40,7 +40,7 @@
 
   <ItemGroup>
     <!-- Include icon.png and NUGET.md in the project. -->
-    <None Include="$(RepoRoot)/nuget/NUGET.md" Link="NUGET.md" Pack="true" PackagePath="." />
+    <None Include="./NUGET.md" Link="NUGET.md" Pack="true" PackagePath="." />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
