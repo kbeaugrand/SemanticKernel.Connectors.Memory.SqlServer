@@ -6,10 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.KernelMemory.Abstractions" Version="0.26.240104.1" />
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.0-rc3" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.0.0-rc3" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.0.0-rc3" />
-    <PackageVersion Include="RhinoMocks" Version="3.6.1" />
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.1" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.0.1" />
     <PackageVersion Include="System.Text.Json" Version="8.0.0" />
     <!-- Microsoft.Extensions.Configuration -->
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
