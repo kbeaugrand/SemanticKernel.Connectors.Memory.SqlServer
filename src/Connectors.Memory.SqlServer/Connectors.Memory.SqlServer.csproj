@@ -35,7 +35,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SemanticKernel.Abstractions" />
-    <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" />
   </ItemGroup>
 
 </Project>
