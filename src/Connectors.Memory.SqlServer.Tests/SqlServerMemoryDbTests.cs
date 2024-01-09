@@ -486,11 +486,14 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
 
         var filter = new MemoryFilter().ByTag("test", "record1");
 
+        _ = this._textEmbeddingGeneratorMock.Setup(x => x.GenerateEmbeddingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(compareEmbedding);
+
         // Act
         double threshold = -1;
         var topNResults = memoryDb.GetSimilarListAsync(
-                index: collection, 
-                text: "Sample", 
+                index: collection,
+                text: "Sample",
                 limit: 4,
                 minRelevance: threshold,
                 filters: new[] { filter })
@@ -500,5 +503,126 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         // Assert
         Assert.NotNull(topNResults);
         Assert.Empty(topNResults);
+    }
+
+    /// <summary>
+    /// Test that get similar list should return expected results.
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task GetSimilarListShouldNotReturnExpectedWithFiltersWithANDClauseAsync()
+    {
+        // Arrange
+        var memoryDb = this.CreateMemoryDb();
+
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
+        string collection = "test_collection";
+        await memoryDb.CreateIndexAsync(collection, 1536);
+        int i = 0;
+
+        MemoryRecord testRecord = new MemoryRecord()
+        {
+            Id = "test" + i,
+            Vector = new float[] { 1, 1, 1 }
+        };
+
+        testRecord.Tags.Add("test", "record0");
+        testRecord.Tags.Add("test", "test");
+
+        _ = await memoryDb.UpsertAsync(collection, testRecord);
+
+        testRecord = new MemoryRecord()
+        {
+            Id = "test" + i,
+            Vector = new float[] { 1, 1, 1 }
+        };
+
+        testRecord.Tags.Add("test", "record1");
+        testRecord.Tags.Add("test", "test");
+
+        _ = await memoryDb.UpsertAsync(collection, testRecord);
+
+        _ = this._textEmbeddingGeneratorMock.Setup(x => x.GenerateEmbeddingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(compareEmbedding);
+
+        // Act
+        double threshold = -1;
+        var topNResults = memoryDb.GetSimilarListAsync(
+                index: collection,
+                text: "Sample",
+                limit: 4,
+                minRelevance: threshold,
+                filters: new[] {
+                    new MemoryFilter()
+                        .ByTag("test", "record0")
+                        .ByTag("test", "test")
+                })
+            .ToEnumerable()
+            .ToArray();
+
+        // Assert
+        Assert.NotNull(topNResults);
+        Assert.Single(topNResults);
+    }
+
+    /// <summary>
+    /// Test that get similar list should return expected results.
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task GetSimilarListShouldNotReturnExpectedWithFiltersWithORClauseAsync()
+    {
+        // Arrange
+        var memoryDb = this.CreateMemoryDb();
+        var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
+
+        string collection = "test_collection";
+        await memoryDb.CreateIndexAsync(collection, 1536);
+        int i = 0;
+
+        MemoryRecord testRecord = new MemoryRecord()
+        {
+            Id = "test" + i++,
+            Vector = new float[] { 1, 1, 1 }
+        };
+
+        testRecord.Tags.Add("test", "record0");
+        testRecord.Tags.Add("test", "test");
+
+        _ = await memoryDb.UpsertAsync(collection, testRecord);
+
+        testRecord = new MemoryRecord()
+        {
+            Id = "test" + i,
+            Vector = new float[] { 1, 1, 1 }
+        };
+
+        testRecord.Tags.Add("test", "record1");
+        testRecord.Tags.Add("test", "test");
+
+        _ = await memoryDb.UpsertAsync(collection, testRecord);
+
+        _ = this._textEmbeddingGeneratorMock.Setup(x => x.GenerateEmbeddingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(compareEmbedding);        
+        
+        // Act
+        double threshold = -1;
+        var topNResults = memoryDb.GetSimilarListAsync(
+                index: collection,
+                text: "Sample",
+                limit: 4,
+                minRelevance: threshold,
+                filters: new[] {
+                    new MemoryFilter()
+                        .ByTag("test", "record0"),
+                    new MemoryFilter()
+                        .ByTag("test", "record1")
+                })
+            .ToEnumerable()
+            .ToArray();
+
+        // Assert
+        Assert.NotNull(topNResults);
+        Assert.Equal(2, topNResults.Length);
     }
 }

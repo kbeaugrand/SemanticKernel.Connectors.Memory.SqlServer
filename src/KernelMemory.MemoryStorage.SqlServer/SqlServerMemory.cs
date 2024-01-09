@@ -10,6 +10,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -249,28 +250,10 @@ public class SqlServerMemory : IMemoryDb
                 {queryColumns}
             FROM 
                 {this.GetFullTableName(MemoryTableName)}
-		    LEFT JOIN 
-        {this.GetFullTableName($"{TagsTableName}_{index}")} ON {this.GetFullTableName(MemoryTableName)}.[id] = {this.GetFullTableName($"{TagsTableName}_{index}")}.[memory_id]
-		    LEFT JOIN  [filters] ON 
-        {this.GetFullTableName($"{TagsTableName}_{index}")}.[name] = [filters].[name] AND {this.GetFullTableName($"{TagsTableName}_{index}")}.[value] = [filters].[value]
-            WHERE 1=1
-            AND {this.GetFullTableName(MemoryTableName)}.[collection] = @index";
+		    WHERE 1=1
+            AND {this.GetFullTableName(MemoryTableName)}.[collection] = @index
+            {GenerateFilters(index, cmd.Parameters, filters)};";
 
-        if (filters is not null)
-        {
-            filters.ToList()
-                .ForEach(c => c.ToList().ForEach(x =>
-                {
-                    tagFilters.Add(x.Key, x.Value);
-
-                    cmd.CommandText += $@" 
-            AND [filters].[name] = @filter_name_{x.Key} 
-            AND [filters].[value] = @filter_value_{x.Key}";
-
-                    cmd.Parameters.AddWithValue($"@filter_name_{x.Key}", x.Key);
-                    cmd.Parameters.AddWithValue($"@filter_value_{x.Key}", JsonSerializer.Serialize(x.Value));
-                }));
-        }
 
         cmd.Parameters.AddWithValue("@index", index);
         cmd.Parameters.AddWithValue("@limit", limit);
@@ -304,14 +287,8 @@ public class SqlServerMemory : IMemoryDb
         using SqlCommand cmd = connection.CreateCommand();
 
         cmd.CommandText = $@"
-        WITH [filters] AS 
-		(
-		    SELECT 
-		     cast([filters].[key] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [name],
-		     cast([filters].[value] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [value]
-		    FROM openjson(@filters) [filters]
-		)
-        ,[embedding] as
+        WITH 
+        [embedding] as
         (
             SELECT 
                 cast([key] AS INT) AS [vector_value_id],
@@ -339,54 +316,24 @@ public class SqlServerMemory : IMemoryDb
         ORDER BY
             cosine_similarity DESC
         )
-        SELECT 
+        SELECT DISTINCT
             {this.GetFullTableName(MemoryTableName)}.[id],
             {this.GetFullTableName(MemoryTableName)}.[key],    
             {this.GetFullTableName(MemoryTableName)}.[payload],
             {this.GetFullTableName(MemoryTableName)}.[tags],
-            {this.GetFullTableName(MemoryTableName)}.[embedding],
-            (
-                SELECT 
-                    [vector_value]
-                FROM {this.GetFullTableName($"{EmbeddingsTableName}_{index}")}
-                WHERE {this.GetFullTableName(MemoryTableName)}.[id] = {this.GetFullTableName($"{EmbeddingsTableName}_{index}")}.[memory_id]
-                ORDER BY vector_value_id
-                FOR JSON AUTO
-            ) AS [embeddings],
             [similarity].[cosine_similarity]
         FROM 
             [similarity] 
         INNER JOIN 
             {this.GetFullTableName(MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
-        LEFT JOIN {this.GetFullTableName($"{TagsTableName}_{index}")} ON {this.GetFullTableName(MemoryTableName)}.[id] = {this.GetFullTableName($"{TagsTableName}_{index}")}.[memory_id]
-		LEFT JOIN  [filters] ON {this.GetFullTableName($"{TagsTableName}_{index}")}.[name] = [filters].[name] AND {this.GetFullTableName($"{TagsTableName}_{index}")}.[value] = [filters].[value]
         WHERE 1=1
         AND cosine_similarity >= @min_relevance_score
-        ";
-
-        var tagFilters = new TagCollection();
-
-        if (filters is not null)
-        {
-            filters.ToList()
-                .ForEach(c => c.ToList().ForEach(x =>
-                {
-                    tagFilters.Add(x.Key, x.Value);
-
-                    cmd.CommandText += $@" 
-        AND [filters].[name] = @filter_name_{x.Key} 
-        AND [filters].[value] = @filter_value_{x.Key}";
-
-                    cmd.Parameters.AddWithValue($"@filter_name_{x.Key}", x.Key);
-                    cmd.Parameters.AddWithValue($"@filter_value_{x.Key}", JsonSerializer.Serialize(x.Value));
-                }));
-        }
+        {GenerateFilters(index, cmd.Parameters, filters)}";        
 
         cmd.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
         cmd.Parameters.AddWithValue("@index", index);
         cmd.Parameters.AddWithValue("@min_relevance_score", minRelevance);
         cmd.Parameters.AddWithValue("@limit", limit);
-        cmd.Parameters.AddWithValue("@filters", JsonSerializer.Serialize(tagFilters));
 
         using var dataReader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
@@ -438,26 +385,32 @@ public class SqlServerMemory : IMemoryDb
                             [src].[vector_value_id], 
                             [src].[vector_value] );
 
+				DELETE FROM [tgt]
+				FROM  {this.GetFullTableName($"{TagsTableName}_{index}")} AS [tgt]
+				INNER JOIN {this.GetFullTableName(MemoryTableName)} ON [tgt].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
+				WHERE {this.GetFullTableName(MemoryTableName)}.[key] = @key
+                        AND {this.GetFullTableName(MemoryTableName)}.[collection] = @index;
+
                 MERGE {this.GetFullTableName($"{TagsTableName}_{index}")} AS [tgt]  
                 USING (
                     SELECT 
                         {this.GetFullTableName(MemoryTableName)}.[id],
                         cast([tags].[key] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [tag_name],
-                        cast([tags].[value] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [tag_value] 
+                        [tag_value].[value] AS [value] 
                     FROM {this.GetFullTableName(MemoryTableName)}
-                    CROSS APPLY
-                        openjson(@tags) [tags]
+                    CROSS APPLY openjson(@tags) [tags]                    
+                    CROSS APPLY openjson(cast([tags].[value] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS) [tag_value]
                     WHERE {this.GetFullTableName(MemoryTableName)}.[key] = @key
                         AND {this.GetFullTableName(MemoryTableName)}.[collection] = @index
                 ) AS [src]
                 ON [tgt].[memory_id] = [src].[id] AND [tgt].[name] = [src].[tag_name]
                 WHEN MATCHED THEN
-                    UPDATE SET [tgt].[value] = [src].[tag_value]
+                    UPDATE SET [tgt].[value] = [src].[value]
                 WHEN NOT MATCHED THEN
                     INSERT ([memory_id], [name], [value])
                     VALUES ([src].[id], 
                             [src].[tag_name], 
-                            [src].[tag_value]);";
+                            [src].[value]);";
 
         cmd.Parameters.AddWithValue("@index", index);
         cmd.Parameters.AddWithValue("@key", record.Id);
@@ -487,9 +440,9 @@ public class SqlServerMemory : IMemoryDb
                     (   [id] UNIQUEIDENTIFIER NOT NULL,
                         [key] NVARCHAR(256)  NOT NULL,
                         [collection] NVARCHAR(256) NOT NULL,
-                        [payload] TEXT,
-                        [tags] TEXT,
-                        [embedding] TEXT,
+                        [payload] NVARCHAR(MAX),
+                        [tags] NVARCHAR(MAX),
+                        [embedding] NVARCHAR(MAX),
                         PRIMARY KEY ([id]),
                         FOREIGN KEY ([collection]) REFERENCES {this.GetFullTableName(MemoryCollectionTableName)}([id]) ON DELETE CASCADE,
                         CONSTRAINT UK_{MemoryTableName} UNIQUE([collection], [key])
@@ -536,6 +489,57 @@ public class SqlServerMemory : IMemoryDb
     private string GetFullTableName(string tableName)
     {
         return $"[{this._config.Schema}].[{tableName}]";
+    }
+
+    /// <summary>
+    /// Generates the filters as SQL commands and sets the SQL parameters
+    /// </summary>
+    /// <param name="index">The index name.</param>
+    /// <param name="parameters">The SQL parameters to populate.</param>
+    /// <param name="filters">The filters to apply</param>
+    /// <returns></returns>
+    private string GenerateFilters(string index, SqlParameterCollection parameters, ICollection<MemoryFilter> ? filters = null)
+    {
+        var filterBuilder = new StringBuilder();
+
+        if (filters is not null)
+        {
+            filterBuilder.Append($@"AND (
+                ");
+
+            for (int i = 0; i < filters.Count; i++)
+            {
+                var filter = filters.ElementAt(i);
+
+                if (i > 0)
+                {
+                    filterBuilder.Append(" OR ");
+                }
+
+                filterBuilder.Append($@"EXISTS (
+                        SELECT
+	                        1 
+                        FROM (
+	                        SELECT 
+	                          cast([filters].[key] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [name],
+	                          [tag_value].[value] AS[value]
+	                          FROM openjson(@filter_{i}) [filters]
+	                          CROSS APPLY openjson(cast([filters].[value] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS)[tag_value]
+                          ) AS [filter]
+                          INNER JOIN {this.GetFullTableName($"{TagsTableName}_{index}")} AS [tags] ON [filter].[name] = [tags].[name] AND [filter].[value] = [tags].[value]
+                        WHERE 
+	                        [tags].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
+                    )
+                    ");
+
+                parameters.AddWithValue($"@filter_{i}", JsonSerializer.Serialize(filter));
+            }
+
+            filterBuilder.Append(@"
+            )");
+        }
+
+        return filterBuilder.ToString();
     }
 
     private async Task<MemoryRecord> ReadEntryAsync(SqlDataReader dataReader, bool withEmbedding, CancellationToken cancellationToken = default)
