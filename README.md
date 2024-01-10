@@ -64,8 +64,27 @@ using SemanticKernel.Connectors.Memory.SqlServer;
 var memory = new KernelMemoryBuilder()
     .WithOpenAIDefaults(Env.Var("OPENAI_API_KEY"))
     .WithSqlServerMemoryDb("YouSqlConnectionString")
-            ...
     .Build<MemoryServerless>();
+```
+
+Then you can use the memory store to import documents and ask questions:
+
+```csharp
+// Import a file
+await memory.ImportDocumentAsync("meeting-transcript.docx", tags: new() { { "user", "Blake" } });
+
+// Import multiple files and apply multiple tags
+await memory.ImportDocumentAsync(new Document("file001")
+    .AddFile("business-plan.docx")
+    .AddFile("project-timeline.pdf")
+    .AddTag("user", "Blake")
+    .AddTag("collection", "business")
+    .AddTag("collection", "plans")
+    .AddTag("fiscalYear", "2023"));
+
+var answer1 = await memory.AskAsync("How many people attended the meeting?");
+
+var answer2 = await memory.AskAsync("what's the project timeline?", filter: new MemoryFilter().ByTag("user", "Blake"));
 ```
 
 The memory store will populate all the needed tables during startup and let you focus on the development of your plugin.
