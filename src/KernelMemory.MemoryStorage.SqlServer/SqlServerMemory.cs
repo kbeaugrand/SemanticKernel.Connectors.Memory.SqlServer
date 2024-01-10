@@ -222,6 +222,12 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async IAsyncEnumerable<MemoryRecord> GetListAsync(string index, ICollection<MemoryFilter>? filters = null, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
     {
+        if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
+        {
+            // Index does not exist
+            yield break;
+        }
+
         string queryColumns = "[key], [payload], [tags]";
 
         if (withEmbeddings)
@@ -270,6 +276,12 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async IAsyncEnumerable<(MemoryRecord, double)> GetSimilarListAsync(string index, string text, ICollection<MemoryFilter>? filters = null, double minRelevance = 0, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
     {
+        if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
+        {
+            // Index does not exist
+            yield break;
+        }
+
         Embedding embedding = await this._embeddingGenerator.GenerateEmbeddingAsync(text, cancellationToken).ConfigureAwait(false);
 
         string queryColumns = "[id], [payload], [tags]";
@@ -347,6 +359,12 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task<string> UpsertAsync(string index, MemoryRecord record, CancellationToken cancellationToken = default)
     {
+        if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
+        {
+            // Index does not exist
+            return string.Empty;
+        }
+
         using var connection = new SqlConnection(this._config.ConnectionString);
 
         await connection.OpenAsync(cancellationToken)
