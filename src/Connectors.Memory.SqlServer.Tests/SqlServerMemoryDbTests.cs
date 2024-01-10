@@ -531,7 +531,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
 
         MemoryRecord testRecord = new MemoryRecord()
         {
-            Id = "test" + i,
+            Id = "test" + i++,
             Vector = new float[] { 1, 1, 1 }
         };
 
