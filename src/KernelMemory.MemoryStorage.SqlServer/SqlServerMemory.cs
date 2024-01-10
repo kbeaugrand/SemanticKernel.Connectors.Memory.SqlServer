@@ -112,8 +112,8 @@ public class SqlServerMemory : IMemoryDb
                         FOREIGN KEY ([memory_id]) REFERENCES {this.GetFullTableName(MemoryTableName)}([id]) ON DELETE CASCADE
                     );
                     
-                    IF OBJECT_ID(N'{this._config.Schema}.IXC_{$"{EmbeddingsTableName}_{index}"}', N'U') IS NULL
-                    CREATE CLUSTERED COLUMNSTORE INDEX IXC_{$"{EmbeddingsTableName}_{index}"}
+                    IF OBJECT_ID(N'[{this._config.Schema}.IXC_{$"{EmbeddingsTableName}_{index}"}]', N'U') IS NULL
+                    CREATE CLUSTERED COLUMNSTORE INDEX [IXC_{$"{EmbeddingsTableName}_{index}"}]
                     ON {this.GetFullTableName($"{EmbeddingsTableName}_{index}")};
                     
                     IF OBJECT_ID(N'{this.GetFullTableName($"{TagsTableName}_{index}")}', N'U') IS NULL
