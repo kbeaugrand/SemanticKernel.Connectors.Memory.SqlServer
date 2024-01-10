@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -86,6 +87,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task CreateIndexAsync(string index, int vectorSize, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         if (await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false))
         {
             // Index already exists
@@ -135,6 +138,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task DeleteAsync(string index, MemoryRecord record, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         using var connection = new SqlConnection(this._config.ConnectionString);
 
         using SqlCommand cmd = connection.CreateCommand();
@@ -169,6 +174,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task DeleteIndexAsync(string index, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
         {
             // Index does not exist
@@ -186,7 +193,7 @@ public class SqlServerMemory : IMemoryDb
                                      WHERE [id] = @index;
 
                                      DROP TABLE {this.GetFullTableName($"{EmbeddingsTableName}_{index}")};
-                                     DROP TABLE {this.GetFullTableName($"{TagsTableName}_{index}")}
+                                     DROP TABLE {this.GetFullTableName($"{TagsTableName}_{index}")};
                                     ";
 
             command.Parameters.AddWithValue("@index", index);
@@ -222,6 +229,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async IAsyncEnumerable<MemoryRecord> GetListAsync(string index, ICollection<MemoryFilter>? filters = null, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
         {
             // Index does not exist
@@ -281,6 +290,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async IAsyncEnumerable<(MemoryRecord, double)> GetSimilarListAsync(string index, string text, ICollection<MemoryFilter>? filters = null, double minRelevance = 0, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
         {
             // Index does not exist
@@ -364,6 +375,8 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task<string> UpsertAsync(string index, MemoryRecord record, CancellationToken cancellationToken = default)
     {
+        index = NormalizeIndexName(index);
+
         if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
         {
             // Index does not exist
@@ -587,5 +600,22 @@ public class SqlServerMemory : IMemoryDb
         }
 
         return entry;
+    }
+
+    // Note: "_" is allowed in Postgres, but we normalize it to "-" for consistency with other DBs
+    private static readonly Regex s_replaceIndexNameCharsRegex = new(@"[\s|\\|/|.|_|:]");
+    private const string ValidSeparator = "-";
+
+    private static string NormalizeIndexName(string index)
+    {
+        if (string.IsNullOrWhiteSpace(index))
+        {
+            index = Constants.DefaultIndex;
+        }
+
+        index = s_replaceIndexNameCharsRegex.Replace(index.Trim().ToLowerInvariant(), ValidSeparator);
+
+
+        return index;
     }
 }
