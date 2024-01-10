@@ -235,6 +235,11 @@ public class SqlServerMemory : IMemoryDb
             queryColumns += ", [embedding]";
         }
 
+        if (limit < 0)
+        {
+            limit = int.MaxValue;
+        }
+
         using var connection = new SqlConnection(this._config.ConnectionString);
 
         await connection.OpenAsync(cancellationToken)
