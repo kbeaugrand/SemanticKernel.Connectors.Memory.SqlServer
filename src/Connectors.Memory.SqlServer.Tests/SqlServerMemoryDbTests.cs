@@ -8,6 +8,7 @@ using Microsoft.KernelMemory.MemoryStorage;
 using Moq;
 using SemanticKernel.IntegrationTests.Connectors.Memory.SqlServer;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,14 +85,15 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task GetIndexesShouldReturnNewlyCreatedIndexTestAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var collections = await memoryDb.GetIndexesAsync(CancellationToken.None).ConfigureAwait(true);
 
         Assert.NotNull(collections);
         Assert.Single(collections);
-        Assert.Equal("test", collections.First());
+        Assert.Equal(collectionName, collections.First());
     }
 
 
@@ -103,16 +105,17 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task GetIndexesShouldNotReturnNewlyDeletedIndexTestAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var collections = await memoryDb.GetIndexesAsync(CancellationToken.None).ConfigureAwait(true);
 
         Assert.NotNull(collections);
         Assert.Single(collections);
-        Assert.Equal("test", collections.First());
+        Assert.Equal(collectionName, collections.First());
 
-        await memoryDb.DeleteIndexAsync("test", CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.DeleteIndexAsync(collectionName, CancellationToken.None).ConfigureAwait(true);
 
         collections = await memoryDb.GetIndexesAsync(CancellationToken.None).ConfigureAwait(true);
 
@@ -127,23 +130,24 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     [Fact]
     public async Task CreateIndexShouldNotThrowExceptionIfIndexAlreadyExistsTestAsync()
     {
-        var memoryDb = this.CreateMemoryDb();
+        var memoryDb = this.CreateMemoryDb(); 
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var collections = await memoryDb.GetIndexesAsync(CancellationToken.None).ConfigureAwait(true);
 
         Assert.NotNull(collections);
         Assert.Single(collections);
-        Assert.Equal("test", collections.First());
+        Assert.Equal(collectionName, collections.First());
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         collections = await memoryDb.GetIndexesAsync(CancellationToken.None).ConfigureAwait(true);
 
         Assert.NotNull(collections);
         Assert.Single(collections);
-        Assert.Equal("test", collections.First());
+        Assert.Equal(collectionName, collections.First());
     }
 
     /// <summary>
@@ -154,16 +158,17 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task UpsertRecordShouldPassAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var record = new MemoryRecord()
         {
-            Id = "test",
+            Id = Guid.NewGuid().ToString(),
             Vector = new float[] { 1, 2, 3 }
         };
 
-        await memoryDb.UpsertAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -174,8 +179,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task GetListAsyncShouldReturnTheStoredRecordsAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var record = new MemoryRecord()
         {
@@ -183,9 +189,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
             Vector = new float[] { 1, 2, 3 }
         };
 
-        await memoryDb.UpsertAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
 
-        var results = await memoryDb.GetListAsync("test", null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        var results = await memoryDb.GetListAsync(collectionName, null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Single(results);
@@ -200,8 +206,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task ExistingRecordCanBeRemovedAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var record = new MemoryRecord()
         {
@@ -209,17 +216,17 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
             Vector = new float[] { 1, 2, 3 }
         };
 
-        await memoryDb.UpsertAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
 
-        var results = await memoryDb.GetListAsync("test", null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        var results = await memoryDb.GetListAsync(collectionName, null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Single(results);
         Assert.Equal("test", results.First().Id);
 
-        await memoryDb.DeleteAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.DeleteAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
 
-        results = await memoryDb.GetListAsync("test", null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        results = await memoryDb.GetListAsync(collectionName, null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Empty(results);
@@ -233,8 +240,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task UpsertShouldUpdateRecordTestAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var record = new MemoryRecord()
         {
@@ -242,9 +250,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
             Vector = new float[] { 1, 2, 3 }
         };
 
-        await memoryDb.UpsertAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
 
-        var results = await memoryDb.GetListAsync("test", null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        var results = await memoryDb.GetListAsync(collectionName, null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Single(results);
@@ -252,9 +260,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
 
         record.Vector = new float[] { 4, 5, 6 };
 
-        await memoryDb.UpsertAsync("test", record, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record, CancellationToken.None).ConfigureAwait(true);
 
-        results = await memoryDb.GetListAsync("test", null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        results = await memoryDb.GetListAsync(collectionName, null, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Single(results);
@@ -268,8 +276,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
     public async Task GetListShouldReturnFilteredRecordsTestAsync()
     {
         var memoryDb = this.CreateMemoryDb();
+        var collectionName = Guid.NewGuid().ToString();
 
-        await memoryDb.CreateIndexAsync("test", 1536, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.CreateIndexAsync(collectionName, 1536, CancellationToken.None).ConfigureAwait(true);
 
         var record1 = new MemoryRecord()
         {
@@ -281,7 +290,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
             }
         };
 
-        await memoryDb.UpsertAsync("test", record1, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record1, CancellationToken.None).ConfigureAwait(true);
 
         var record2 = new MemoryRecord()
         {
@@ -293,9 +302,9 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
             }
         };
 
-        await memoryDb.UpsertAsync("test", record2, CancellationToken.None).ConfigureAwait(true);
+        await memoryDb.UpsertAsync(collectionName, record2, CancellationToken.None).ConfigureAwait(true);
 
-        var results = await memoryDb.GetListAsync("test", new[] { new MemoryFilter().ByTag("test", "value1") }, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
+        var results = await memoryDb.GetListAsync(collectionName, new[] { new MemoryFilter().ByTag("test", "value1") }, limit: 10, withEmbeddings: true, CancellationToken.None).ToListAsync().ConfigureAwait(true);
 
         Assert.NotNull(results);
         Assert.Single(results);
@@ -313,7 +322,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         var memoryDb = this.CreateMemoryDb();
 
         var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
-        string collection = "test_collection";
+        string collection = Guid.NewGuid().ToString();
         await memoryDb.CreateIndexAsync(collection, 1536);
         int i = 0;
 
@@ -385,7 +394,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         var memoryDb = this.CreateMemoryDb();
 
         var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
-        string collection = "test_collection";
+        string collection = Guid.NewGuid().ToString();
         await memoryDb.CreateIndexAsync(collection, 1536);
         int i = 0;
 
@@ -470,7 +479,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         var memoryDb = this.CreateMemoryDb();
 
         var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
-        string collection = "test_collection";
+        string collection = Guid.NewGuid().ToString();
         await memoryDb.CreateIndexAsync(collection, 1536);
         int i = 0;
 
@@ -516,7 +525,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         var memoryDb = this.CreateMemoryDb();
 
         var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
-        string collection = "test_collection";
+        string collection = Guid.NewGuid().ToString();
         await memoryDb.CreateIndexAsync(collection, 1536);
         int i = 0;
 
@@ -576,7 +585,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         var memoryDb = this.CreateMemoryDb();
         var compareEmbedding = new ReadOnlyMemory<float>(new float[] { 1, 1, 1 });
 
-        string collection = "test_collection";
+        string collection = Guid.NewGuid().ToString();
         await memoryDb.CreateIndexAsync(collection, 1536);
         int i = 0;
 
