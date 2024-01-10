@@ -356,7 +356,7 @@ public class SqlServerMemory : IMemoryDb
             {this.GetFullTableName(MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
         WHERE 1=1
         AND cosine_similarity >= @min_relevance_score
-        {GenerateFilters(index, cmd.Parameters, filters)}";        
+        {GenerateFilters(index, cmd.Parameters, filters)}";
 
         cmd.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
         cmd.Parameters.AddWithValue("@index", index);
@@ -534,46 +534,58 @@ public class SqlServerMemory : IMemoryDb
     /// <param name="parameters">The SQL parameters to populate.</param>
     /// <param name="filters">The filters to apply</param>
     /// <returns></returns>
-    private string GenerateFilters(string index, SqlParameterCollection parameters, ICollection<MemoryFilter> ? filters = null)
+    private string GenerateFilters(string index, SqlParameterCollection parameters, ICollection<MemoryFilter>? filters = null)
     {
         var filterBuilder = new StringBuilder();
 
-        if (filters is not null)
-        {
-            filterBuilder.Append($@"AND (
+        if (filters is null || filters.Count <= 0 || filters.All(f => f.Count <= 0))
+            return string.Empty;
+
+
+        filterBuilder.Append($@"AND (
                 ");
 
-            for (int i = 0; i < filters.Count; i++)
+        for (int i = 0; i < filters.Count; i++)
+        {
+            var filter = filters.ElementAt(i);
+
+            if (i > 0)
             {
-                var filter = filters.ElementAt(i);
-
-                if (i > 0)
-                {
-                    filterBuilder.Append(" OR ");
-                }
-
-                filterBuilder.Append($@"EXISTS (
-                        SELECT
-	                        1 
-                        FROM (
-	                        SELECT 
-	                          cast([filters].[key] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS AS [name],
-	                          [tag_value].[value] AS[value]
-	                          FROM openjson(@filter_{i}) [filters]
-	                          CROSS APPLY openjson(cast([filters].[value] AS NVARCHAR(256)) COLLATE SQL_Latin1_General_CP1_CI_AS)[tag_value]
-                          ) AS [filter]
-                          INNER JOIN {this.GetFullTableName($"{TagsTableName}_{index}")} AS [tags] ON [filter].[name] = [tags].[name] AND [filter].[value] = [tags].[value]
-                        WHERE 
-	                        [tags].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
-                    )
-                    ");
-
-                parameters.AddWithValue($"@filter_{i}", JsonSerializer.Serialize(filter));
+                filterBuilder.Append(" OR ");
             }
 
-            filterBuilder.Append(@"
-            )");
+            for (int j = 0; j < filter.Pairs.Count(); j++)
+            {
+                var value = filter.Pairs.ElementAt(j);
+
+                if (j > 0)
+                {
+                    filterBuilder.Append(@" AND 
+                        ");
+                }
+
+                filterBuilder.Append(" ( ");
+
+                filterBuilder.Append($@"EXISTS (
+                         SELECT
+	                        1 
+                        FROM {this.GetFullTableName($"{TagsTableName}_{index}")} AS [tags]
+                        WHERE 
+	                        [tags].[memory_id] = {this.GetFullTableName(MemoryTableName)}.[id]
+                            AND [name] = @filter_{i}_{j}_name
+                            AND [value] = @filter_{i}_{j}_value
+                        )
+                    ");
+
+                filterBuilder.Append(" ) ");
+
+                parameters.AddWithValue($"@filter_{i}_{j}_name", value.Key);
+                parameters.AddWithValue($"@filter_{i}_{j}_value", value.Value);
+            }
         }
+
+        filterBuilder.Append(@"
+            )");
 
         return filterBuilder.ToString();
     }
