@@ -465,7 +465,11 @@ public class SqlServerMemory : IMemoryDb
     /// <returns></returns>
     private void CreateTablesIfNotExists()
     {
-        var sql = $@"IF OBJECT_ID(N'{this.GetFullTableName(MemoryCollectionTableName)}', N'U') IS NULL
+        var sql = $@"IF NOT EXISTS (SELECT  *
+                                    FROM    sys.schemas
+                                    WHERE   name = N'{this._config.Schema}' )
+                    EXEC('CREATE SCHEMA [{this._config.Schema}]');
+                    IF OBJECT_ID(N'{this.GetFullTableName(MemoryCollectionTableName)}', N'U') IS NULL
                     CREATE TABLE {this.GetFullTableName(MemoryCollectionTableName)}
                     (   [id] NVARCHAR(256) NOT NULL,
                         PRIMARY KEY ([id])
