@@ -8,6 +8,26 @@ namespace KernelMemory.MemoryStorage.SqlServer;
 public class SqlServerConfig
 {
     /// <summary>
+    /// The default SQL Server collections table name.
+    /// </summary>
+    internal const string DefaultMemoryCollectionTableName = "SKMemoryCollections";
+
+    /// <summary>
+    /// The default SQL Server memories table name.
+    /// </summary>
+    internal const string DefaultMemoryTableName = "SKMemories";
+
+    /// <summary>
+    /// The default SQL Server embeddings table name.
+    /// </summary>
+    internal const string DefaultEmbeddingsTableName = "SKEmbeddings";
+
+    /// <summary>
+    /// The default SQL Server tags table name.
+    /// </summary>
+    internal const string DefaultTagsTableName = "SKMemoriesTags";
+
+    /// <summary>
     /// The default schema used by the SQL Server memory store.
     /// </summary>
     public const string DefaultSchema = "dbo";
@@ -21,4 +41,24 @@ public class SqlServerConfig
     /// The schema used by the SQL Server memory store.
     /// </summary>
     public string Schema { get; set; } = DefaultSchema;
+
+    /// <summary>
+    /// The SQL Server collections table name.
+    /// </summary>
+    internal string MemoryCollectionTableName { get; set; } = DefaultMemoryCollectionTableName;
+
+    /// <summary>
+    /// The SQL Server memories table name.
+    /// </summary>
+    internal string MemoryTableName { get; set; } = DefaultMemoryTableName;
+
+    /// <summary>
+    /// The SQL Server embeddings table name.
+    /// </summary>
+    internal string EmbeddingsTableName { get; set; } = DefaultEmbeddingsTableName;
+
+    /// <summary>
+    /// The SQL Server tags table name.
+    /// </summary>
+    internal string TagsTableName { get; set; } = DefaultTagsTableName;
 }

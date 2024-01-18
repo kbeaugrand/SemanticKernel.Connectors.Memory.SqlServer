@@ -61,6 +61,7 @@ public class SqlServerMemoryDbTests : IAsyncLifetime
         this._config = new SqlServerConfig
         {
             ConnectionString = connectionString,
+            Schema = "ai"
         };
 
         return Task.CompletedTask;

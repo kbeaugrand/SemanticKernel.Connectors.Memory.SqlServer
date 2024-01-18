@@ -6,9 +6,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.KernelMemory.Abstractions" Version="0.26.240104.1" />
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.0.1" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.0.1" />
-    <PackageVersion Include="System.Text.Json" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.1.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.1.0" />
+    <PackageVersion Include="System.Text.Json" Version="8.0.0" />
     <!-- Microsoft.Extensions.Configuration -->
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
