@@ -19,23 +19,18 @@ namespace SemanticKernel.Connectors.Memory.SqlServer;
 /// </remarks>
 public sealed class SqlServerMemoryStore : IMemoryStore
 {
-    /// <summary>
-    /// The default schema used by the SQL Server memory store.
-    /// </summary>
-    public const string DefaultSchema = "dbo";
-
     private readonly ISqlServerClient _dbClient;
 
     /// <summary>
     /// Connects to a SQL Server database using the provided connection string and schema, and returns a new instance of <see cref="SqlServerMemoryStore"/>.
     /// </summary>
     /// <param name="connectionString">The connection string to use for connecting to the SQL Server database.</param>
-    /// <param name="schema">The schema to use for the SQL Server database tables. Defaults to <see cref="DefaultSchema"/>.</param>
+    /// <param name="config">The SQL server configuration.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
     /// <returns>A new instance of <see cref="SqlServerMemoryStore"/> connected to the specified SQL Server database.</returns>
-    public static async Task<SqlServerMemoryStore> ConnectAsync(string connectionString, string schema = DefaultSchema, CancellationToken cancellationToken = default)
+    public static async Task<SqlServerMemoryStore> ConnectAsync(string connectionString, SqlServerConfig config = default, CancellationToken cancellationToken = default)
     {
-        var client = new SqlServerClient(connectionString, schema);
+        var client = new SqlServerClient(connectionString, config ?? new());
 
         await client.CreateTablesAsync(cancellationToken).ConfigureAwait(false);
 
