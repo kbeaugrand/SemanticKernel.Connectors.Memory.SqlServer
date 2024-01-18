@@ -41,7 +41,10 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
 
         this._connectionString = connectionString;
 
-        this._dataSource = new SqlServerClient(connectionString, "dbo");
+        this._dataSource = new SqlServerClient(connectionString, new SqlServerConfig
+        {
+            Schema = "ai"
+        });
 
         await this._dataSource.CreateTablesAsync(CancellationToken.None).ConfigureAwait(false);
     }
