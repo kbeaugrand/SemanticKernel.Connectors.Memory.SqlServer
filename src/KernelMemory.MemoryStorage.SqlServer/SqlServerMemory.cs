@@ -120,6 +120,12 @@ public class SqlServerMemory : IMemoryDb
     {
         index = NormalizeIndexName(index);
 
+        if (!(await this.DoesIndexExistsAsync(index, cancellationToken).ConfigureAwait(false)))
+        {
+            // Index does not exist
+            return;
+        }
+
         using var connection = new SqlConnection(this._config.ConnectionString);
 
         using SqlCommand cmd = connection.CreateCommand();
