@@ -11,7 +11,7 @@ namespace SemanticKernel.Connectors.Memory.SqlServer;
 /// <summary>
 /// Interface for a client that interacts with a SQL Server database to store and retrieve data.
 /// </summary>
-public interface ISqlServerClient
+public interface ISqlServerClient : IDisposable
 {
     /// <summary>
     /// Creates a new collection with the specified name in the SQL Server database.

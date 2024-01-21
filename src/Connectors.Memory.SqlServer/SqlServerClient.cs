@@ -21,6 +21,7 @@ public sealed class SqlServerClient : ISqlServerClient
 {
     private readonly string _connectionString;
     private readonly SqlServerConfig _configuration;
+    private SqlConnection _connection;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlServerClient"/> class with the specified connection string and schema.
@@ -31,6 +32,9 @@ public sealed class SqlServerClient : ISqlServerClient
     {
         this._connectionString = connectionString;
         this._configuration = configuration;
+
+        this._connection = new SqlConnection(this._connectionString);
+        this._connection.Open();
     }
 
     /// <inheritdoc />
@@ -59,12 +63,7 @@ public sealed class SqlServerClient : ISqlServerClient
                         CONSTRAINT UK_{this._configuration.MemoryTableName} UNIQUE([collection], [key])
                     );";
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = sql;
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -82,12 +81,7 @@ public sealed class SqlServerClient : ISqlServerClient
             return;
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $@"
                     INSERT INTO {this.GetFullTableName(this._configuration.MemoryCollectionTableName)}([id])
@@ -134,12 +128,7 @@ public sealed class SqlServerClient : ISqlServerClient
     /// <inheritdoc />
     public async IAsyncEnumerable<string> GetCollectionsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $"SELECT [id] FROM {this.GetFullTableName(this._configuration.MemoryCollectionTableName)}";
 
@@ -163,12 +152,7 @@ public sealed class SqlServerClient : ISqlServerClient
             return;
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $@"DELETE FROM {this.GetFullTableName(this._configuration.MemoryCollectionTableName)}
                                      WHERE [id] = @collectionName;
@@ -193,12 +177,7 @@ public sealed class SqlServerClient : ISqlServerClient
             queryColumns += ", [embedding]";
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand entryCommand = connection.CreateCommand();
+        using SqlCommand entryCommand = this._connection.CreateCommand();
 
         entryCommand.CommandText = $@"
                                     SELECT {queryColumns}
@@ -239,12 +218,7 @@ public sealed class SqlServerClient : ISqlServerClient
             queryColumns += ", [embedding]";
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"
             SELECT {queryColumns}
@@ -271,12 +245,7 @@ public sealed class SqlServerClient : ISqlServerClient
     {
         collectionName = NormalizeIndexName(collectionName);
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        using SqlCommand cmd = connection.CreateCommand();
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $"DELETE FROM {this.GetFullTableName(this._configuration.MemoryTableName)} WHERE [collection] = @collectionName AND [key]=@key";
         cmd.Parameters.AddWithValue("@collectionName", collectionName);
@@ -297,12 +266,7 @@ public sealed class SqlServerClient : ISqlServerClient
             return;
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"
             DELETE
@@ -336,12 +300,7 @@ public sealed class SqlServerClient : ISqlServerClient
             queryColumns += ", [embedding]";
         }
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"WITH [embedding] as
         (
@@ -416,12 +375,7 @@ public sealed class SqlServerClient : ISqlServerClient
     {
         collectionName = NormalizeIndexName(collectionName);
 
-        using var connection = new SqlConnection(this._connectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"
                 MERGE INTO {this.GetFullTableName(this._configuration.MemoryTableName)}
@@ -506,5 +460,14 @@ public sealed class SqlServerClient : ISqlServerClient
         index = s_replaceIndexNameCharsRegex.Replace(index.Trim().ToLowerInvariant(), ValidSeparator);
 
         return index;
+    }
+
+    public void Dispose()
+    {
+        if (this._connection != null)
+        {
+            this._connection.Dispose();
+            this._connection = null!;
+        }
     }
 }

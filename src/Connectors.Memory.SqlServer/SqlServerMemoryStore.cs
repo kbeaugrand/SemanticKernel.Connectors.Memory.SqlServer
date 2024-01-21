@@ -17,9 +17,9 @@ namespace SemanticKernel.Connectors.Memory.SqlServer;
 /// <remarks>The data is saved to a MSSQL server, specified in the connection string of the factory method.
 /// The data persists between subsequent instances.
 /// </remarks>
-public sealed class SqlServerMemoryStore : IMemoryStore
+public sealed class SqlServerMemoryStore : IMemoryStore, IDisposable
 {
-    private readonly ISqlServerClient _dbClient;
+    private ISqlServerClient _dbClient;
 
     /// <summary>
     /// Connects to a SQL Server database using the provided connection string and schema, and returns a new instance of <see cref="SqlServerMemoryStore"/>.
@@ -225,5 +225,14 @@ public sealed class SqlServerMemoryStore : IMemoryStore
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return record.Key;
+    }
+
+    public void Dispose()
+    {
+        if (this._dbClient is not null)
+        {
+            this._dbClient.Dispose();
+            this._dbClient = null!;
+        }
     }
 }
