@@ -7,9 +7,9 @@ using Microsoft.KernelMemory.AI;
 using Microsoft.KernelMemory.Diagnostics;
 using Microsoft.KernelMemory.MemoryStorage;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -23,7 +23,7 @@ namespace KernelMemory.MemoryStorage.SqlServer;
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities",
                                                    Justification = "We need to build the full table name using schema and collection, it does not support parameterized passing.")]
-public class SqlServerMemory : IMemoryDb
+public class SqlServerMemory : IMemoryDb, IDisposable
 {
     /// <summary>
     /// The SQL Server configuration.
@@ -41,20 +41,29 @@ public class SqlServerMemory : IMemoryDb
     private readonly ILogger<SqlServerMemory> _log;
 
     /// <summary>
+    /// The SQL connection.
+    /// </summary>
+    SqlConnection _connection;
+
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SqlServerMemory"/> class.
     /// </summary>
     /// <param name="config">The SQL server instance configuration.</param>
     /// <param name="embeddingGenerator">The text embedding generator.</param>
     /// <param name="log">The logger.</param>
     public SqlServerMemory(
-        SqlServerConfig config,
-        ITextEmbeddingGenerator embeddingGenerator,
-        ILogger<SqlServerMemory>? log = null)
+            SqlServerConfig config,
+            ITextEmbeddingGenerator embeddingGenerator,
+            ILogger<SqlServerMemory>? log = null)
     {
         this._embeddingGenerator = embeddingGenerator;
         this._log = log ?? DefaultLogger<SqlServerMemory>.Instance;
 
         this._config = config;
+
+        this._connection = new SqlConnection(this._config.ConnectionString);
+        this._connection.Open();
 
         if (this._embeddingGenerator == null)
         {
@@ -75,12 +84,7 @@ public class SqlServerMemory : IMemoryDb
             return;
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $@"
                     INSERT INTO {this.GetFullTableName(this._config.MemoryCollectionTableName)}([id])
@@ -126,13 +130,8 @@ public class SqlServerMemory : IMemoryDb
             return;
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        using SqlCommand cmd = connection.CreateCommand();
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
+        using SqlCommand cmd = this._connection.CreateCommand();
+        
         cmd.CommandText = $@"
             DELETE [embeddings]
             FROM {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")} [embeddings]
@@ -168,12 +167,7 @@ public class SqlServerMemory : IMemoryDb
             return;
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $@"DELETE FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}
                                      WHERE [id] = @index;
@@ -191,13 +185,9 @@ public class SqlServerMemory : IMemoryDb
     /// <inheritdoc/>
     public async Task<IEnumerable<string>> GetIndexesAsync(CancellationToken cancellationToken = default)
     {
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
         List<string> indexes = new();
 
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = $"SELECT [id] FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}";
 
@@ -213,7 +203,7 @@ public class SqlServerMemory : IMemoryDb
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<MemoryRecord> GetListAsync(string index, ICollection<MemoryFilter>? filters = null, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MemoryRecord> GetListAsync(string index, ICollection<MemoryFilter>? filters = null, int limit = 1, bool withEmbeddings = false, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         index = NormalizeIndexName(index);
 
@@ -235,12 +225,7 @@ public class SqlServerMemory : IMemoryDb
             limit = int.MaxValue;
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         var tagFilters = new TagCollection();
 
@@ -274,7 +259,7 @@ public class SqlServerMemory : IMemoryDb
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<(MemoryRecord, double)> GetSimilarListAsync(string index, string text, ICollection<MemoryFilter>? filters = null, double minRelevance = 0, int limit = 1, bool withEmbeddings = false, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<(MemoryRecord, double)> GetSimilarListAsync(string index, string text, ICollection<MemoryFilter>? filters = null, double minRelevance = 0, int limit = 1, bool withEmbeddings = false, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         index = NormalizeIndexName(index);
 
@@ -293,12 +278,7 @@ public class SqlServerMemory : IMemoryDb
             queryColumns += ", [embedding]";
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"
         WITH 
@@ -369,12 +349,7 @@ public class SqlServerMemory : IMemoryDb
             return string.Empty;
         }
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        await connection.OpenAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-        using SqlCommand cmd = connection.CreateCommand();
+        using SqlCommand cmd = this._connection.CreateCommand();
 
         cmd.CommandText = $@"
                 MERGE INTO {this.GetFullTableName(this._config.MemoryTableName)}
@@ -475,11 +450,7 @@ public class SqlServerMemory : IMemoryDb
                     );
                     ";
 
-        using var connection = new SqlConnection(this._config.ConnectionString);
-
-        connection.Open();
-
-        using (SqlCommand command = connection.CreateCommand())
+        using (SqlCommand command = this._connection.CreateCommand())
         {
             command.CommandText = sql;
             command.ExecuteNonQuery();
@@ -619,5 +590,14 @@ public class SqlServerMemory : IMemoryDb
 
 
         return index;
+    }
+
+    public void Dispose()
+    {
+        if (this._connection != null)
+        {
+            this._connection.Dispose();
+            this._connection = null!;
+        }
     }
 }
