@@ -40,15 +40,15 @@ public class SqlServerConfig
     /// <summary>
     /// The SQL Server collections table name.
     /// </summary>
-    internal string MemoryCollectionTableName { get; set; } = DefaultMemoryCollectionTableName;
+    public string MemoryCollectionTableName { get; set; } = DefaultMemoryCollectionTableName;
 
     /// <summary>
     /// The SQL Server memories table name.
     /// </summary>
-    internal string MemoryTableName { get; set; } = DefaultMemoryTableName;
+    public string MemoryTableName { get; set; } = DefaultMemoryTableName;
 
     /// <summary>
     /// The SQL Server embeddings table name.
     /// </summary>
-    internal string EmbeddingsTableName { get; set; } = DefaultEmbeddingsTableName;
+    public string EmbeddingsTableName { get; set; } = DefaultEmbeddingsTableName;
 }
