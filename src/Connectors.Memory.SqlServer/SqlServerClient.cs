@@ -349,7 +349,8 @@ public sealed class SqlServerClient : ISqlServerClient
             [similarity] 
         INNER JOIN 
             {this.GetFullTableName(this._configuration.MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(this._configuration.MemoryTableName)}.[id]
-        WHERE cosine_similarity >= @min_relevance_score";
+        WHERE [cosine_similarity] >= @min_relevance_score
+        ORDER BY [cosine_similarity] desc";
 
         cmd.Parameters.AddWithValue("@vector", embedding);
         cmd.Parameters.AddWithValue("@collection", collectionName);

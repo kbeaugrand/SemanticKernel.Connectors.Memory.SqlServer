@@ -321,8 +321,9 @@ public class SqlServerMemory : IMemoryDb, IDisposable
         INNER JOIN 
             {this.GetFullTableName(this._config.MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
         WHERE 1=1
-        AND cosine_similarity >= @min_relevance_score
-        {GenerateFilters(index, cmd.Parameters, filters)}";
+        AND [cosine_similarity] >= @min_relevance_score
+        {GenerateFilters(index, cmd.Parameters, filters)}
+        ORDER BY [cosine_similarity] desc";
 
         cmd.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
         cmd.Parameters.AddWithValue("@index", index);
