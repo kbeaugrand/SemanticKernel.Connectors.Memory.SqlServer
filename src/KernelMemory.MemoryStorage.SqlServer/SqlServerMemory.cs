@@ -101,7 +101,8 @@ public class SqlServerMemory : IMemoryDb, IDisposable
                     
                     IF OBJECT_ID(N'[{this._config.Schema}.IXC_{$"{this._config.EmbeddingsTableName}_{index}"}]', N'U') IS NULL
                     CREATE CLUSTERED COLUMNSTORE INDEX [IXC_{$"{this._config.EmbeddingsTableName}_{index}"}]
-                    ON {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")};
+                    ON {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")}
+                    ORDER ([memory_id]);
                     
                     IF OBJECT_ID(N'{this.GetFullTableName($"{this._config.TagsTableName}_{index}")}', N'U') IS NULL
                     CREATE TABLE {this.GetFullTableName($"{this._config.TagsTableName}_{index}")}
