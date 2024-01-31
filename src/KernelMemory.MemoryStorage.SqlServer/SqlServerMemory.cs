@@ -23,7 +23,7 @@ namespace KernelMemory.MemoryStorage.SqlServer;
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities",
                                                    Justification = "We need to build the full table name using schema and collection, it does not support parameterized passing.")]
-public class SqlServerMemory : IMemoryDb, IDisposable
+public class SqlServerMemory : IMemoryDb
 {
     /// <summary>
     /// The SQL Server configuration.
@@ -41,12 +41,6 @@ public class SqlServerMemory : IMemoryDb, IDisposable
     private readonly ILogger<SqlServerMemory> _log;
 
     /// <summary>
-    /// The SQL connection.
-    /// </summary>
-    SqlConnection _connection;
-
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="SqlServerMemory"/> class.
     /// </summary>
     /// <param name="config">The SQL server instance configuration.</param>
@@ -61,9 +55,6 @@ public class SqlServerMemory : IMemoryDb, IDisposable
         this._log = log ?? DefaultLogger<SqlServerMemory>.Instance;
 
         this._config = config;
-
-        this._connection = new SqlConnection(this._config.ConnectionString);
-        this._connection.Open();
 
         if (this._embeddingGenerator == null)
         {
@@ -84,7 +75,10 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             return;
         }
 
-        using (SqlCommand command = this._connection.CreateCommand())
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $@"
                     INSERT INTO {this.GetFullTableName(this._config.MemoryCollectionTableName)}([id])
@@ -131,9 +125,12 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             return;
         }
 
-        using SqlCommand cmd = this._connection.CreateCommand();
-        
-        cmd.CommandText = $@"
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using (SqlCommand command = connection.CreateCommand())
+        {
+            command.CommandText = $@"
             DELETE [embeddings]
             FROM {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")} [embeddings]
             INNER JOIN {this.GetFullTableName(this._config.MemoryTableName)} ON [embeddings].[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
@@ -149,12 +146,14 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             AND {this.GetFullTableName(this._config.MemoryTableName)}.[key]=@key;    
 
             DELETE FROM {this.GetFullTableName(this._config.MemoryTableName)} WHERE [collection] = @index AND [key]=@key;
-        ";
+            ";
 
-        cmd.Parameters.AddWithValue("@index", index);
-        cmd.Parameters.AddWithValue("@key", record.Id);
+            command.Parameters.AddWithValue("@index", index);
+            command.Parameters.AddWithValue("@key", record.Id);
 
-        await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        }
     }
 
     /// <inheritdoc/>
@@ -168,7 +167,10 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             return;
         }
 
-        using (SqlCommand command = this._connection.CreateCommand())
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $@"DELETE FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}
                                      WHERE [id] = @index;
@@ -188,7 +190,10 @@ public class SqlServerMemory : IMemoryDb, IDisposable
     {
         List<string> indexes = new();
 
-        using (SqlCommand command = this._connection.CreateCommand())
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $"SELECT [id] FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}";
 
@@ -226,11 +231,14 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             limit = int.MaxValue;
         }
 
-        using SqlCommand cmd = this._connection.CreateCommand();
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        var tagFilters = new TagCollection();
+        using (SqlCommand command = connection.CreateCommand())
+        {
+            var tagFilters = new TagCollection();
 
-        cmd.CommandText = $@"
+            command.CommandText = $@"
             WITH [filters] AS 
 		    (
 			    SELECT 
@@ -244,18 +252,20 @@ public class SqlServerMemory : IMemoryDb, IDisposable
                 {this.GetFullTableName(this._config.MemoryTableName)}
 		    WHERE 1=1
             AND {this.GetFullTableName(this._config.MemoryTableName)}.[collection] = @index
-            {GenerateFilters(index, cmd.Parameters, filters)};";
+            {GenerateFilters(index, command.Parameters, filters)};";
 
 
-        cmd.Parameters.AddWithValue("@index", index);
-        cmd.Parameters.AddWithValue("@limit", limit);
-        cmd.Parameters.AddWithValue("@filters", JsonSerializer.Serialize(tagFilters));
+            command.Parameters.AddWithValue("@index", index);
+            command.Parameters.AddWithValue("@limit", limit);
+            command.Parameters.AddWithValue("@filters", JsonSerializer.Serialize(tagFilters));
 
-        using var dataReader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            using var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
-        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
-        {
-            yield return await this.ReadEntryAsync(dataReader, withEmbeddings, cancellationToken).ConfigureAwait(false);
+            while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                yield return await this.ReadEntryAsync(dataReader, withEmbeddings, cancellationToken).ConfigureAwait(false);
+            }
+
         }
     }
 
@@ -279,9 +289,12 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             queryColumns += ", [embedding]";
         }
 
-        using SqlCommand cmd = this._connection.CreateCommand();
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        cmd.CommandText = $@"
+        using (SqlCommand command = connection.CreateCommand())
+        {
+            command.CommandText = $@"
         WITH 
         [embedding] as
         (
@@ -323,20 +336,21 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             {this.GetFullTableName(this._config.MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
         WHERE 1=1
         AND [cosine_similarity] >= @min_relevance_score
-        {GenerateFilters(index, cmd.Parameters, filters)}
+        {GenerateFilters(index, command.Parameters, filters)}
         ORDER BY [cosine_similarity] desc";
 
-        cmd.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
-        cmd.Parameters.AddWithValue("@index", index);
-        cmd.Parameters.AddWithValue("@min_relevance_score", minRelevance);
-        cmd.Parameters.AddWithValue("@limit", limit);
+            command.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
+            command.Parameters.AddWithValue("@index", index);
+            command.Parameters.AddWithValue("@min_relevance_score", minRelevance);
+            command.Parameters.AddWithValue("@limit", limit);
 
-        using var dataReader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            using var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
-        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
-        {
-            double cosineSimilarity = dataReader.GetDouble(dataReader.GetOrdinal("cosine_similarity"));
-            yield return (await this.ReadEntryAsync(dataReader, withEmbeddings, cancellationToken).ConfigureAwait(false), cosineSimilarity);
+            while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                double cosineSimilarity = dataReader.GetDouble(dataReader.GetOrdinal("cosine_similarity"));
+                yield return (await this.ReadEntryAsync(dataReader, withEmbeddings, cancellationToken).ConfigureAwait(false), cosineSimilarity);
+            }
         }
     }
 
@@ -351,9 +365,12 @@ public class SqlServerMemory : IMemoryDb, IDisposable
             return string.Empty;
         }
 
-        using SqlCommand cmd = this._connection.CreateCommand();
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        cmd.CommandText = $@"
+        using (SqlCommand command = connection.CreateCommand())
+        {
+            command.CommandText = $@"
                 MERGE INTO {this.GetFullTableName(this._config.MemoryTableName)}
                 USING (SELECT @key) as [src]([key])
                 ON {this.GetFullTableName(this._config.MemoryTableName)}.[key] = [src].[key]
@@ -411,15 +428,16 @@ public class SqlServerMemory : IMemoryDb, IDisposable
                             [src].[tag_name], 
                             [src].[value]);";
 
-        cmd.Parameters.AddWithValue("@index", index);
-        cmd.Parameters.AddWithValue("@key", record.Id);
-        cmd.Parameters.AddWithValue("@payload", JsonSerializer.Serialize(record.Payload) ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@tags", JsonSerializer.Serialize(record.Tags) ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@embedding", JsonSerializer.Serialize(record.Vector.Data.ToArray()));
+            command.Parameters.AddWithValue("@index", index);
+            command.Parameters.AddWithValue("@key", record.Id);
+            command.Parameters.AddWithValue("@payload", JsonSerializer.Serialize(record.Payload) ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@tags", JsonSerializer.Serialize(record.Tags) ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@embedding", JsonSerializer.Serialize(record.Vector.Data.ToArray()));
 
-        await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-        return record.Id;
+            return record.Id;
+        }
     }
 
     /// <summary>
@@ -452,7 +470,10 @@ public class SqlServerMemory : IMemoryDb, IDisposable
                     );
                     ";
 
-        using (SqlCommand command = this._connection.CreateCommand())
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        connection.Open();
+
+        using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = sql;
             command.ExecuteNonQuery();
@@ -592,14 +613,5 @@ public class SqlServerMemory : IMemoryDb, IDisposable
 
 
         return index;
-    }
-
-    public void Dispose()
-    {
-        if (this._connection != null)
-        {
-            this._connection.Dispose();
-            this._connection = null!;
-        }
     }
 }
