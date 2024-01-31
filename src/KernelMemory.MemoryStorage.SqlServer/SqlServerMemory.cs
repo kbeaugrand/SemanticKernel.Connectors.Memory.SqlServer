@@ -81,6 +81,8 @@ public class SqlServerMemory : IMemoryDb
         using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $@"
+                    BEGIN TRANSACTION;
+
                     INSERT INTO {this.GetFullTableName(this._config.MemoryCollectionTableName)}([id])
                     VALUES (@index);
                     
@@ -90,7 +92,7 @@ public class SqlServerMemory : IMemoryDb
                         [memory_id] UNIQUEIDENTIFIER NOT NULL,
                         [vector_value_id] [int] NOT NULL,
                         [vector_value] [float] NOT NULL
-                        FOREIGN KEY ([memory_id]) REFERENCES {this.GetFullTableName(this._config.MemoryTableName)}([id]) ON DELETE CASCADE
+                        FOREIGN KEY ([memory_id]) REFERENCES {this.GetFullTableName(this._config.MemoryTableName)}([id])
                     );
                     
                     IF OBJECT_ID(N'[{this._config.Schema}.IXC_{$"{this._config.EmbeddingsTableName}_{index}"}]', N'U') IS NULL
@@ -104,9 +106,11 @@ public class SqlServerMemory : IMemoryDb
                         [memory_id] UNIQUEIDENTIFIER NOT NULL,
                         [name] NVARCHAR(256)  NOT NULL,
                         [value] NVARCHAR(256) NOT NULL,
-                        FOREIGN KEY ([memory_id]) REFERENCES {this.GetFullTableName(this._config.MemoryTableName)}([id]) ON DELETE CASCADE
+                        FOREIGN KEY ([memory_id]) REFERENCES {this.GetFullTableName(this._config.MemoryTableName)}([id])
                     );
-            ";
+
+                    COMMIT;
+                ";
 
             command.Parameters.AddWithValue("@index", index);
 
@@ -131,6 +135,8 @@ public class SqlServerMemory : IMemoryDb
         using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $@"
+            BEGIN TRANSACTION;
+
             DELETE [embeddings]
             FROM {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")} [embeddings]
             INNER JOIN {this.GetFullTableName(this._config.MemoryTableName)} ON [embeddings].[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
@@ -146,7 +152,8 @@ public class SqlServerMemory : IMemoryDb
             AND {this.GetFullTableName(this._config.MemoryTableName)}.[key]=@key;    
 
             DELETE FROM {this.GetFullTableName(this._config.MemoryTableName)} WHERE [collection] = @index AND [key]=@key;
-            ";
+            
+            COMMIT;";
 
             command.Parameters.AddWithValue("@index", index);
             command.Parameters.AddWithValue("@key", record.Id);
@@ -172,12 +179,16 @@ public class SqlServerMemory : IMemoryDb
 
         using (SqlCommand command = connection.CreateCommand())
         {
-            command.CommandText = $@"DELETE FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}
+            command.CommandText = $@"
+                    BEGIN TRANSACTION;
+
+                    DROP TABLE {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")};
+                    DROP TABLE {this.GetFullTableName($"{this._config.TagsTableName}_{index}")};
+                      
+                    DELETE FROM {this.GetFullTableName(this._config.MemoryCollectionTableName)}
                                      WHERE [id] = @index;
 
-                                     DROP TABLE {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")};
-                                     DROP TABLE {this.GetFullTableName($"{this._config.TagsTableName}_{index}")};
-                                    ";
+                    COMMIT;";
 
             command.Parameters.AddWithValue("@index", index);
 
@@ -371,6 +382,8 @@ public class SqlServerMemory : IMemoryDb
         using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandText = $@"
+                BEGIN TRANSACTION;
+
                 MERGE INTO {this.GetFullTableName(this._config.MemoryTableName)}
                 USING (SELECT @key) as [src]([key])
                 ON {this.GetFullTableName(this._config.MemoryTableName)}.[key] = [src].[key]
@@ -426,7 +439,9 @@ public class SqlServerMemory : IMemoryDb
                     INSERT ([memory_id], [name], [value])
                     VALUES ([src].[id], 
                             [src].[tag_name], 
-                            [src].[value]);";
+                            [src].[value]);
+                
+                COMMIT;";
 
             command.Parameters.AddWithValue("@index", index);
             command.Parameters.AddWithValue("@key", record.Id);
