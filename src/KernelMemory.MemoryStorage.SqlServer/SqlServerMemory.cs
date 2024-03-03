@@ -1,4 +1,4 @@
-﻿// Copyright (c) Kevin BEAUGRAND. All rights reserved.
+// Copyright (c) Kevin BEAUGRAND. All rights reserved.
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
@@ -97,7 +97,8 @@ public class SqlServerMemory : IMemoryDb
                     
                     IF OBJECT_ID(N'[{this._config.Schema}.IXC_{$"{this._config.EmbeddingsTableName}_{index}"}]', N'U') IS NULL
                     CREATE CLUSTERED COLUMNSTORE INDEX [IXC_{$"{this._config.EmbeddingsTableName}_{index}"}]
-                    ON {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")};
+                    ON {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")}
+                    { (this.GetSqlServerMajorVersionNumber() >= 16 ? "ORDER ([memory_id])" : "")};
                     
                     IF OBJECT_ID(N'{this.GetFullTableName($"{this._config.TagsTableName}_{index}")}', N'U') IS NULL
                     CREATE TABLE {this.GetFullTableName($"{this._config.TagsTableName}_{index}")}
@@ -627,5 +628,18 @@ public class SqlServerMemory : IMemoryDb
 
 
         return index;
+    }
+
+    private int GetSqlServerMajorVersionNumber()
+    {
+        using var connection = new SqlConnection(this._config.ConnectionString);
+        connection.Open();
+
+        using (SqlCommand command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT SERVERPROPERTY('ProductMajorVersion')";
+
+            return (int)command.ExecuteScalar();
+        }
     }
 }
