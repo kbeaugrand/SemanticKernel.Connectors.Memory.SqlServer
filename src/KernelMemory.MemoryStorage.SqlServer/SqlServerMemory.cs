@@ -8,6 +8,7 @@ using Microsoft.KernelMemory.Diagnostics;
 using Microsoft.KernelMemory.MemoryStorage;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -639,7 +640,9 @@ public class SqlServerMemory : IMemoryDb
         {
             command.CommandText = "SELECT SERVERPROPERTY('ProductMajorVersion')";
 
-            return (int)command.ExecuteScalar();
+            var result = command.ExecuteScalar();
+
+            return Convert.ToInt32(result, CultureInfo.InvariantCulture);
         }
     }
 }
