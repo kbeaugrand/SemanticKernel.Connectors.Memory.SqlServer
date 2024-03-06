@@ -306,6 +306,8 @@ public class SqlServerMemory : IMemoryDb
 
         using (SqlCommand command = connection.CreateCommand())
         {
+            var generatedFilters = GenerateFilters(index, command.Parameters, filters);
+
             command.CommandText = $@"
         WITH 
         [embedding] as
@@ -331,6 +333,10 @@ public class SqlServerMemory : IMemoryDb
             [embedding]
         INNER JOIN 
             {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")} ON [embedding].vector_value_id = {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")}.vector_value_id
+        INNER JOIN
+            {this.GetFullTableName(this._config.MemoryTableName)} ON {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")}.[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
+        WHERE 1=1
+        {generatedFilters}
         GROUP BY
             {this.GetFullTableName($"{this._config.EmbeddingsTableName}_{index}")}.[memory_id]
         ORDER BY
@@ -348,7 +354,7 @@ public class SqlServerMemory : IMemoryDb
             {this.GetFullTableName(this._config.MemoryTableName)} ON [similarity].[memory_id] = {this.GetFullTableName(this._config.MemoryTableName)}.[id]
         WHERE 1=1
         AND [cosine_similarity] >= @min_relevance_score
-        {GenerateFilters(index, command.Parameters, filters)}
+        {generatedFilters}
         ORDER BY [cosine_similarity] desc";
 
             command.Parameters.AddWithValue("@vector", JsonSerializer.Serialize(embedding.Data.ToArray()));
