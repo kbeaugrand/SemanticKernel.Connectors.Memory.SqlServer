@@ -37,13 +37,16 @@ dotnet add package SemanticKernel.Connectors.Memory.SqlServer
 To add your SQL Server memory connector, add the following statements to your kernel initialization code:
 
 ```csharp
-using SemanticKernel.Connectors.Memory.SqlServer;
-...
-var kernel = Kernel.Builder
-            ...
-                .WithMemoryStorage(await SqlServerMemoryStore.ConnectAsync(connectionString: "Server=.;Database=SK;Trusted_Connection=True;"))
-            ...
-                .Build();
+        using SemanticKernel.Connectors.Memory.SqlServer;
+            
+        var kernel = Kernel.CreateBuilder()
+                        .Build();
+
+        var sqlMemoryStore = await SqlServerMemoryStore.ConnectAsync(connectionString: "Server=.;Database=SK;Trusted_Connection=True;");
+        var semanticTextMemory = new SemanticTextMemory(sqlMemoryStore, kernel.GetRequiredService<ITextEmbeddingGenerationService>());
+
+        kernel.ImportPluginFromObject(new TextMemoryPlugin(semanticTextMemory));
+
 ```
 
 The memory store will populate all the needed tables during startup and let you focus on the development of your plugin.
