@@ -17,6 +17,7 @@ namespace SemanticKernel.Connectors.Memory.SqlServer;
 /// <remarks>The data is saved to a MSSQL server, specified in the connection string of the factory method.
 /// The data persists between subsequent instances.
 /// </remarks>
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 public sealed class SqlServerMemoryStore : IMemoryStore, IDisposable
 {
     private ISqlServerClient _dbClient;
@@ -236,3 +237,4 @@ public sealed class SqlServerMemoryStore : IMemoryStore, IDisposable
         }
     }
 }
+#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
