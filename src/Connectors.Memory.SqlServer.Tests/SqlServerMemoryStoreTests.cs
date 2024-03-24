@@ -14,6 +14,8 @@ using Xunit;
 
 namespace SemanticKernel.IntegrationTests.Connectors.Memory.SqlServer;
 
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+
 /// <summary>
 /// Integration tests of <see cref="SqlServerMemoryStore"/>.
 /// </summary>
@@ -661,3 +663,5 @@ public class SqlServerMemoryStoreTests : IAsyncLifetime
 
     #endregion
 }
+
+#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
