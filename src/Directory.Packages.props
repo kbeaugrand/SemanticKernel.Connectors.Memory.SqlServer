@@ -5,9 +5,9 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.KernelMemory.Abstractions" Version="0.28.240212.1" />
+    <PackageVersion Include="Microsoft.KernelMemory.Abstractions" Version="0.40.240430.1" />
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.7.1" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.7.1" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.9.0" />
     <PackageVersion Include="System.Text.Json" Version="8.0.3" />
     <!-- Microsoft.Extensions.Configuration -->
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
