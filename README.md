@@ -7,6 +7,8 @@
 
 This is a connector for the [Semantic Kernel](https://aka.ms/semantic-kernel).
 
+> This package has been deprecated as it is legacy and is no longer maintained.
+
 It provides a connection to a SQL database for the Semantic Kernel for the memories.
 
 ## About Semantic Kernel
